@@ -2,8 +2,8 @@ import Config
 
 # Configure your database
 config :saturn, Saturn.Repo,
-  username: "postgres",
-  password: "postgres",
+  username: System.get_env("DB_USERNAME"),
+  password: System.get_env("DB_PASSWORD"),
   hostname: "localhost",
   database: "saturn_dev",
   stacktrace: true,
