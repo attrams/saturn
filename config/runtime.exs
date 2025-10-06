@@ -37,7 +37,7 @@ if config_env() == :prod do
     # For machines with several cores, consider starting multiple pools of `pool_size`
     # pool_count: 4,
     socket_options: maybe_ipv6,
-    ssl_opts: [verify: :verify_peer, cacerts: :public_key.cacerts_get()]
+    ssl_opts: [verify: :verify_none]
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
