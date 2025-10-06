@@ -31,13 +31,25 @@ if config_env() == :prod do
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
   config :saturn, Saturn.Repo,
-    ssl: true,
+    ssl: [
+      verify: :verify_peer,
+      cacerts: [
+        System.get_env("DATABASE_CA_CERT")
+        |> then(fn pem ->
+          [{_type, der, _info}] = :public_key.pem_decode(pem)
+          der
+        end)
+      ],
+      server_name_indication: System.get_env("DATABASE_HOSTNAME") |> to_charlist(),
+      customize_hostname_check: [
+        match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+      ]
+    ],
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     # For machines with several cores, consider starting multiple pools of `pool_size`
     # pool_count: 4,
-    socket_options: maybe_ipv6,
-    ssl_opts: [verify: :verify_none]
+    socket_options: maybe_ipv6
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
