@@ -31,16 +31,30 @@ if config_env() == :prod do
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
   config :saturn, Saturn.Repo,
+    # SSL configuration for secure Postgres connections using a custom CA cert.
+    # This setup:
+    # - Validates the server certificate against a CA provided in an ENV var
+    # - Enforces hostname matching (prevents MITM attacks)
+    # - Enables SNI for compatibility with managed database hosts
+
     ssl: [
+      # Enforce SSL certificate verification
       verify: :verify_peer,
+
+      # Decode and pass the CA certificate in DER format
       cacerts: [
         System.get_env("DATABASE_CA_CERT")
         |> then(fn pem ->
+          # Decode the PEM-encoded certificate string into a DER binary
           [{_type, der, _info}] = :public_key.pem_decode(pem)
           der
         end)
       ],
+
+      # Enable Server Name Indication (SNI) to match the hostname with the cert
       server_name_indication: System.get_env("DATABASE_HOSTNAME") |> to_charlist(),
+
+      # Enable strict hostname verification to prevent MITM attacks
       customize_hostname_check: [
         match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
       ]
